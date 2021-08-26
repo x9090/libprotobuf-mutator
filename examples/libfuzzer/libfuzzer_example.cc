@@ -33,6 +33,7 @@ protobuf_mutator::libfuzzer::PostProcessorRegistration<libfuzzer_example::Msg>
         static const char* const expected_types[] = {
             "type.googleapis.com/google.protobuf.DescriptorProto",
             "type.googleapis.com/google.protobuf.FileDescriptorProto",
+            "abcdefghijklmnopqrstuvwxyz",
         };
 
         if (!std::count(std::begin(expected_types), std::end(expected_types),
@@ -46,7 +47,7 @@ protobuf_mutator::libfuzzer::PostProcessorRegistration<libfuzzer_example::Msg>
 
 DEFINE_PROTO_FUZZER(const libfuzzer_example::Msg& message) {
   protobuf_mutator::protobuf::FileDescriptorProto file;
-
+  //fprintf(stderr, "[DEBUG] optional_string: %s\n", message.optional_string().c_str());
   // Emulate a bug.
   if (message.optional_uint64() ==
           std::hash<std::string>{}(message.optional_string()) &&

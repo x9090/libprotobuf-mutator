@@ -15,4 +15,4 @@
 add_subdirectory(xml)
 add_subdirectory(expat)
 add_subdirectory(libfuzzer)
-add_subdirectory(libxml2)
+#add_subdirectory(libxml2) # Won't compile on Windows

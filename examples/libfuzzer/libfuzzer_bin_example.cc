@@ -33,6 +33,7 @@ protobuf_mutator::libfuzzer::PostProcessorRegistration<libfuzzer_example::Msg>
         static const char* const expected_types[] = {
             "type.googleapis.com/google.protobuf.DescriptorProto",
             "type.googleapis.com/google.protobuf.FileDescriptorProto",
+            "abcdefghijklmnopqrstuvwxyz",
         };
 
         if (!std::count(std::begin(expected_types), std::end(expected_types),

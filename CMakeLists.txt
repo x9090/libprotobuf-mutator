@@ -40,6 +40,7 @@ find_package(LibLZMA)
 include_directories(${LIBLZMA_INCLUDE_DIRS})
 
 find_package(ZLIB)
+message(STATUS "${ZLIB_INCLUDE_DIRS}")
 include_directories(${ZLIB_INCLUDE_DIRS})
 
 set(CMAKE_CXX_STANDARD 11)
@@ -59,9 +60,32 @@ if (MSVC)
       endif(${flag_var} MATCHES "/MD")
     endforeach(flag_var)
   endif (LIB_PROTO_MUTATOR_DOWNLOAD_PROTOBUF OR LIB_PROTO_MUTATOR_MSVC_STATIC_RUNTIME)
+  
+  MESSAGE(STATUS "Force Clang MSVC ABI static link and update optimization (-O3 /O3) flag")
+  foreach(var 
+            CMAKE_C_FLAGS_RELEASE
+            CMAKE_C_FLAGS_DEBUG_INIT 
+            CMAKE_C_FLAGS_RELEASE_INIT
+            CMAKE_C_FLAGS_MINSIZEREL_INIT 
+            CMAKE_C_FLAGS_RELWITHDEBINFO_INIT
+            CMAKE_CXX_FLAGS_RELEASE
+            CMAKE_CXX_FLAGS_DEBUG_INIT 
+            CMAKE_CXX_FLAGS_RELEASE_INIT
+            CMAKE_CXX_FLAGS_MINSIZEREL_INIT 
+            CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT
+        )
+    if(${var} MATCHES "-O3" AND ${var} MATCHES "-D_DLL" AND ${var} MATCHES "--dependent-lib=msvcrt")
+        string(REGEX REPLACE "-O3" "-O0" ${var} "${${var}}")
+		string(REGEX REPLACE "-D_DLL" "" ${var} "${${var}}")
+		string(REGEX REPLACE "msvcrt" "libcmt" ${var} "${${var}}")
+        MESSAGE(STATUS  "${var}:${${var}}")
+    endif()    
+  endforeach()    
 endif (MSVC)
 
 set(CMAKE_REQUIRED_FLAGS "-fsanitize=address")
+set(CMAKE_REQUIRED_LINK_OPTIONS "-lmsvcrtd.lib;-lclang_rt.fuzzer-i386;-lclang_rt.asan_dynamic-i386.lib;")
+
 check_cxx_compiler_flag(-fsanitize=address LIB_PROTO_MUTATOR_HAS_SANITIZE_ADDRESS)
 check_cxx_compiler_flag("-fsanitize=address -fsanitize-address-use-after-scope"
                         LIB_PROTO_MUTATOR_HAS_SANITIZE_SCOPE)

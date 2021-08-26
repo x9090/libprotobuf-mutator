@@ -22,15 +22,41 @@ include_directories(${LIBXML2_INCLUDE_DIRS})
 list(APPEND LIBXML2_LIBRARIES xml2)
 
 foreach(lib IN LISTS LIBXML2_LIBRARIES)
-  list(APPEND LIBXML2_BUILD_BYPRODUCTS ${LIBXML2_INSTALL_DIR}/lib/lib${lib}.a)
+  if (MSVC)
+    if (CMAKE_BUILD_TYPE MATCHES Debug)
+      set(LIB_PATH ${LIBXML2_INSTALL_DIR}/lib/${lib}d.lib)
+    else()
+      set(LIB_PATH ${LIBXML2_INSTALL_DIR}/lib/${lib}.lib)
+    endif()
+  else()
+    set(LIB_PATH ${LIBXML2_INSTALL_DIR}/lib/lib${lib}.a)
+  endif()
+  list(APPEND LIBXML2_BUILD_BYPRODUCTS ${LIB_PATH})
 
   add_library(${lib} STATIC IMPORTED)
-  set_property(TARGET ${lib} PROPERTY IMPORTED_LOCATION
-               ${LIBXML2_INSTALL_DIR}/lib/lib${lib}.a)
+  set_property(TARGET ${lib} PROPERTY IMPORTED_LOCATION ${LIB_PATH})
   add_dependencies(${lib} ${LIBXML2_TARGET})
 endforeach(lib)
 
 include (ExternalProject)
+if (MSVC)
+ExternalProject_Add(${LIBXML2_TARGET}
+    PREFIX ${LIBXML2_TARGET}
+    GIT_REPOSITORY GIT_REPOSITORY https://gitlab.gnome.org/GNOME/libxml2
+    GIT_TAG master
+    UPDATE_COMMAND ""
+    CMAKE_CACHE_ARGS -DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}
+                     -DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
+    CMAKE_ARGS ${CMAKE_ARGS}
+               -DCMAKE_INSTALL_PREFIX=${LIBXML2_INSTALL_DIR}
+               -DCMAKE_INSTALL_LIBDIR=lib
+			   -DLIBXML2_WITH_PYTHON=OFF
+			   -DCMAKE_TOOLCHAIN_FILE=F:/dev/vcpkg/scripts/buildsystems/vcpkg.cmake
+			   "-DCMAKE_C_FLAGS=${LIBXML2_CFLAGS} -lclang_rt.fuzzer-i386.lib -lclang_rt.asan_dynamic-i386.lib"
+			   "-DCMAKE_CXX_FLAGS=${LIBXML2_CXXFLAGS} -lclang_rt.asan_dll_thunk-i386.lib"
+    BUILD_BYPRODUCTS ${LIBXML2_BUILD_BYPRODUCTS}
+)
+else ()
 ExternalProject_Add(${LIBXML2_TARGET}
     PREFIX ${LIBXML2_TARGET}
     GIT_REPOSITORY GIT_REPOSITORY https://gitlab.gnome.org/GNOME/libxml2
@@ -46,3 +72,4 @@ ExternalProject_Add(${LIBXML2_TARGET}
     INSTALL_COMMAND make install
     BUILD_BYPRODUCTS ${LIBXML2_BUILD_BYPRODUCTS}
 )
+endif()

@@ -15,7 +15,6 @@
 # We only need protobuf_generate_cpp from FindProtobuf, and we are going to
 # override the rest with ExternalProject version.
 include (FindProtobuf)
-
 set(PROTOBUF_TARGET external.protobuf)
 set(PROTOBUF_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/${PROTOBUF_TARGET})
 
@@ -60,6 +59,32 @@ set_property(TARGET ${PROTOBUF_PROTOC_TARGET} PROPERTY IMPORTED_LOCATION
 add_dependencies(${PROTOBUF_PROTOC_TARGET} ${PROTOBUF_TARGET})
 
 include (ExternalProject)
+if (MSVC)
+ExternalProject_Add(${PROTOBUF_TARGET}
+    PREFIX ${PROTOBUF_TARGET}
+    GIT_REPOSITORY https://github.com/google/protobuf.git
+    GIT_TAG 214c77e1b76e63e512bd675d1c300c80438642b6
+    UPDATE_COMMAND ""
+	CMAKE_ARGS ${CMAKE_ARGS} 
+			   -DCMAKE_TOOLCHAIN_FILE=F:/dev/vcpkg/scripts/buildsystems/vcpkg.cmake
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} ${PROTOBUF_INSTALL_DIR}/src/${PROTOBUF_TARGET}/cmake
+        -G${CMAKE_GENERATOR}
+        -DCMAKE_INSTALL_PREFIX=${PROTOBUF_INSTALL_DIR}
+        -DCMAKE_INSTALL_LIBDIR=lib
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+        -DCMAKE_C_COMPILER:FILEPATH=${CMAKE_C_COMPILER}
+        -DCMAKE_CXX_COMPILER:FILEPATH=${CMAKE_CXX_COMPILER}
+		-DCMAKE_C_FLAGS_RELEASE=${DCMAKE_C_FLAGS_RELEASE}
+	    -DCMAKE_CXX_FLAGS_RELEASE=${CMAKE_CXX_FLAGS_RELEASE}
+        -DCMAKE_C_FLAGS=${PROTOBUF_CFLAGS}
+        -DCMAKE_CXX_FLAGS=${PROTOBUF_CXXFLAGS}
+        -Dprotobuf_BUILD_TESTS=OFF
+		-DMSVC=ON
+		-DCMAKE_TOOLCHAIN_FILE=F:/dev/vcpkg/scripts/buildsystems/vcpkg.cmake
+    BUILD_BYPRODUCTS ${PROTOBUF_BUILD_BYPRODUCTS}
+)
+else ()
 ExternalProject_Add(${PROTOBUF_TARGET}
     PREFIX ${PROTOBUF_TARGET}
     GIT_REPOSITORY https://github.com/google/protobuf.git
@@ -78,6 +103,7 @@ ExternalProject_Add(${PROTOBUF_TARGET}
         -Dprotobuf_BUILD_TESTS=OFF
     BUILD_BYPRODUCTS ${PROTOBUF_BUILD_BYPRODUCTS}
 )
+endif(MSVC)
 
 # cmake 3.7 uses Protobuf_ when 3.5 PROTOBUF_ prefixes.
 set(Protobuf_INCLUDE_DIRS ${PROTOBUF_INCLUDE_DIRS})

@@ -22,6 +22,20 @@ target_link_libraries(expat_example
                       protobuf-mutator-xml
                       ${LIB_PROTO_MUTATOR_FUZZER_LIBRARIES}
                       ${EXPAT_LIBRARIES})
+
+# IMPORTANT: Should always link external library statically to the target libfuzzer
+#            to ensure fuzzer reliability. Without static link to external library, 
+#            `expat_example_test` is going to fail (i.e. the coverage stops at 20 corpus)
+if (${EXPAT_SHARED_LIBS})
+	set(EXPAT_EXTRA_LINK_FLAGS "")
+	set(EXPAT_EXTRA_COMPILE_FLAGS "")
+else()
+	set(EXPAT_EXTRA_LINK_FLAGS "-Lexamples/expat/external.expat/lib/ -llibexpat.lib")
+	set(EXPAT_EXTRA_COMPILE_FLAGS "${EXTRA_COMPILE_FLAGS} -fvisibility=hidden")
+	target_compile_definitions(expat_example PUBLIC -DXML_STATIC)
+	add_definitions(-DXML_ENABLE_VISIBILITY=1)
+endif()
+	
 set_property(TARGET expat_example
              PROPERTY COMPILE_FLAGS ${FUZZING_FLAGS})
 set_property(TARGET expat_example

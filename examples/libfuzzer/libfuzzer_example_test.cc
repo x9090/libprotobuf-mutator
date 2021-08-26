@@ -15,6 +15,10 @@
 #include "examples/fuzzer_test.h"
 #include "port/gtest.h"
 
+#ifndef WSTOPSIG
+#define WSTOPSIG(status)   (((status) & 0xff00) >> 8)
+#endif
+
 namespace {
 
 const int kDefaultLibFuzzerError = 77;
@@ -24,13 +28,23 @@ class LibFuzzerExampleTest : public FuzzerTest {};
 int GetError(int exit_code) { return WSTOPSIG(exit_code); }
 
 TEST_F(LibFuzzerExampleTest, Text) {
+#if defined(_WIN32) || defined(_WIN64)
+  EXPECT_EQ(kDefaultLibFuzzerError,
+            RunFuzzer("libfuzzer_example", 1000, 10000000));
+#else
   EXPECT_EQ(kDefaultLibFuzzerError,
             GetError(RunFuzzer("libfuzzer_example", 1000, 10000000)));
+#endif
 }
 
 TEST_F(LibFuzzerExampleTest, Binary) {
+#if defined(_WIN32) || defined(_WIN64)
   EXPECT_EQ(kDefaultLibFuzzerError,
+            RunFuzzer("libfuzzer_bin_example", 1000, 10000000));
+#else
+    EXPECT_EQ(kDefaultLibFuzzerError,
             GetError(RunFuzzer("libfuzzer_bin_example", 1000, 10000000)));
+#endif
 }
 
 }  // namespace

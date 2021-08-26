@@ -31,6 +31,10 @@ add_library(fuzzer-example-proto
 set_property(TARGET fuzzer-example-proto
              PROPERTY COMPILE_FLAGS ${NO_FUZZING_FLAGS})
 
+if (MSVC)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+
 foreach(fuzzer libfuzzer_example libfuzzer_bin_example)
   add_executable(${fuzzer} ${fuzzer}.cc)
   target_link_libraries(${fuzzer}
